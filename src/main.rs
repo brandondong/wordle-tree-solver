@@ -15,21 +15,45 @@ fn main() {
 }
 
 struct SolveTree {
-    head: ClueNode,
+    head: GuessNode,
 }
 
 struct GuessNode {
-    possible_clues: Vec<ClueNode>,
+    guess: String, // TODO lifetimes.
+    expected_rounds_left: f64,
+    possible_clues: Vec<ClueEdge>,
 }
 
-struct ClueNode {
-    optimal_guess: Option<GuessNode>,
+struct ClueEdge {
+    clue: Vec<Clue>,
+    optimal_guess: GuessNode,
+}
+
+enum Clue {
+    Grey,
+    Yellow,
+    Green,
 }
 
 fn generate_solve_tree(guess_set: &HashSet<String>, solution_set: &HashSet<String>) -> SolveTree {
     SolveTree {
-        head: ClueNode {
-            optimal_guess: None,
-        },
+        head: optimal_guess_tree(guess_set),
     }
+}
+
+fn optimal_guess_tree(guess_set: &HashSet<String>) -> GuessNode {
+    // Try all guesses and minimize on expected number of rounds left.
+    guess_set
+        .iter()
+        .map(|guess| {
+            // Calculate expected value over all possible clues received.
+            // TODO call optimal_guess_tree recurisvely for each possible clue and wrap in a clue edge struct.
+            optimal_guess_tree(guess_set)
+        })
+        .min_by(|n1, n2| {
+            n1.expected_rounds_left
+                .partial_cmp(&n2.expected_rounds_left)
+                .unwrap()
+        })
+        .expect("Set of guesses is empty")
 }
